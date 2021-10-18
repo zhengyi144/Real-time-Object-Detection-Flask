@@ -67,14 +67,17 @@ class ObjectDetection:
 
 class VideoStreaming(object):
     def __init__(self):
-        super(VideoStreaming, self).__init__()
-        self.VIDEO = cv2.VideoCapture(0)
-        
-        self.MODEL = ObjectDetection()
+        super(VideoStreaming, self).__init__() 
+        ip_camera_url =0  # 'http://admin:admin@192.168.213.189:8081'
+        self.VIDEO = cv2.VideoCapture(ip_camera_url)
+        #self.MODEL = ObjectDetection()
 
         self._preview = True
         self._flipH = False
         self._detect = False
+        self._width=640
+        self._height=480
+        self._fps=30
         self._exposure = self.VIDEO.get(cv2.CAP_PROP_EXPOSURE)
         self._contrast = self.VIDEO.get(cv2.CAP_PROP_CONTRAST)
 
@@ -93,6 +96,24 @@ class VideoStreaming(object):
     @flipH.setter
     def flipH(self, value):
         self._flipH = bool(value)
+    
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, value):
+        self._width = value
+        self.VIDEO.set(cv2.CAP_PROP_FRAME_WIDTH, self._width)
+
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, value):
+        self._height = value
+        self.VIDEO.set(cv2.CAP_PROP_FRAME_HEIGHT, self._height)
 
     @property
     def detect(self):
@@ -138,7 +159,8 @@ class VideoStreaming(object):
                 if self._preview:
                     # snap = cv2.resize(snap, (0, 0), fx=0.5, fy=0.5)
                     if self.detect:
-                        snap = self.MODEL.detectObj(snap)
+                        print("此处检查显示!")
+                        #snap = self.MODEL.detectObj(snap)
                 else:
                     snap = np.zeros((
                         int(self.VIDEO.get(cv2.CAP_PROP_FRAME_HEIGHT)),

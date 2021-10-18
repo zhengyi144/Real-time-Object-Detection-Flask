@@ -29,6 +29,9 @@ def video_feed():
         mimetype='multipart/x-mixed-replace; boundary=frame'
     )
 
+@application.route("/reset_frame_info")
+def reset_frame_info():
+    return None
 
 # Button requests called from ajax
 @application.route('/request_preview_switch')

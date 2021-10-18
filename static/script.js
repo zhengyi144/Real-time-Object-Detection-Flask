@@ -78,3 +78,22 @@ $(function () {
     return false;
   });
 });
+
+$(function(){
+   //reset frame info
+   $("a#reset-frame").bind("click",function(){
+    var width=$("#width").val();
+    var height=$("#height").val();
+    var fps=$("#fps").val();
+    $.ajax({
+        type:'POST',
+        url: '/reset-frame', 
+        data: {"width":width ,"height":height,"fps":fps},
+        async: false,
+        dataType: 'json',
+        success: function(data){
+           //do nothing
+        }
+    });
+   });
+});
