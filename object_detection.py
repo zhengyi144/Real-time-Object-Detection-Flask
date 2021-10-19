@@ -66,21 +66,24 @@ class ObjectDetection:
 
 
 class VideoStreaming(object):
-    def __init__(self):
+    def __init__(self,camera_url=0,width=1920,height=1080,fps=60):
         super(VideoStreaming, self).__init__() 
-        ip_camera_url =0  # 'http://admin:admin@192.168.213.189:8081'
-        self.VIDEO = cv2.VideoCapture(ip_camera_url)
-        #self.MODEL = ObjectDetection()
+        #ip_camera_url =0  # 'http://admin:admin@192.168.213.189:8081'
 
         self._preview = True
         self._flipH = False
         self._detect = False
-        self._width=640
-        self._height=480
-        self._fps=30
+        self._width=width
+        self._height=height
+        self._fps=fps
+        
+        self.VIDEO = cv2.VideoCapture(camera_url)
+        self.VIDEO.set(cv2.CAP_PROP_FRAME_WIDTH, self._width)
+        self.VIDEO.set(cv2.CAP_PROP_FRAME_HEIGHT, self._height)
+        self.VIDEO.set(cv2.CAP_PROP_FPS, self._fps)
         self._exposure = self.VIDEO.get(cv2.CAP_PROP_EXPOSURE)
         self._contrast = self.VIDEO.get(cv2.CAP_PROP_CONTRAST)
-
+    
     @property
     def preview(self):
         return self._preview
@@ -104,7 +107,7 @@ class VideoStreaming(object):
     @width.setter
     def width(self, value):
         self._width = value
-        self.VIDEO.set(cv2.CAP_PROP_FRAME_WIDTH, self._width)
+        #
 
     @property
     def height(self):
@@ -113,7 +116,15 @@ class VideoStreaming(object):
     @height.setter
     def height(self, value):
         self._height = value
-        self.VIDEO.set(cv2.CAP_PROP_FRAME_HEIGHT, self._height)
+        #
+
+    @property
+    def fps(self):
+        return self._fps
+
+    @fps.setter
+    def fps(self, value):
+        self._fps= value
 
     @property
     def detect(self):

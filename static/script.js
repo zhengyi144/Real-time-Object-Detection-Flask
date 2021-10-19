@@ -82,18 +82,37 @@ $(function () {
 $(function(){
    //reset frame info
    $("a#reset-frame").bind("click",function(){
-    var width=$("#width").val();
-    var height=$("#height").val();
-    var fps=$("#fps").val();
+    var width=parseInt($("#width").val());
+    var height=parseInt($("#height").val());
+    var fps=parseInt($("#fps").val());
     $.ajax({
         type:'POST',
-        url: '/reset-frame', 
-        data: {"width":width ,"height":height,"fps":fps},
-        async: false,
+        url: '/reset_frame_info', 
+        data: JSON.stringify({"width":width ,"height":height,"fps":fps}),
+        //contentType: 'application/json; charset=UTF-8',
         dataType: 'json',
         success: function(data){
            //do nothing
         }
     });
    });
+});
+
+
+$(function(){
+  //reset camera url
+  $("a#reset-frame").bind("click",function(){
+   var url=parseInt($("#url").val());
+  
+   $.ajax({
+       type:'POST',
+       url: '/reset_camera_url', 
+       data: JSON.stringify({"url":url}),
+       //contentType: 'application/json; charset=UTF-8',
+       dataType: 'json',
+       success: function(data){
+          //do nothing
+       }
+   });
+  });
 });

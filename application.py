@@ -1,37 +1,58 @@
-from flask import Flask, render_template, request, Response, redirect, url_for
+from cv2 import data
+from flask import Flask, render_template, request, Response, redirect, url_for,json
 from flask_bootstrap import Bootstrap
-
+import flask_bootstrap
 from object_detection import *
 from camera_settings import *
 
 
 application = Flask(__name__)
 Bootstrap(application)
+VIDEO=None
+CAMERA_URL=0
 
-
-check_settings()
-VIDEO = VideoStreaming()
-
+def initVideoCapture(camera_url=0,width=1920,height=1080,fps=60):
+    check_settings()
+    global VIDEO
+    VIDEO = VideoStreaming(camera_url=camera_url,width=width,height=height,fps=fps)
 
 @application.route('/')
 def home():
     TITLE = '订单商品自动计数'
     return render_template('index.html', TITLE=TITLE)
 
-
 @application.route('/video_feed')
 def video_feed():
     '''
     Video streaming route.
     '''
+    print("初始化video!")
+    initVideoCapture(camera_url=0,width=640,height=480,fps=60)
     return Response(
         VIDEO.show(),
         mimetype='multipart/x-mixed-replace; boundary=frame'
     )
 
-@application.route("/reset_frame_info")
+@application.route("/reset_frame_info",methods=["POST"])
 def reset_frame_info():
-    return None
+    try:
+        data=json.loads(request.get_data())
+        width=int(data["width"])
+        height=int(data["height"])
+        fps=int(data["fps"])
+        #print(width,height,fps)
+        initVideoCapture(CAMERA_URL,width=width,height=height,fps=fps)
+    except Exception as e:
+        print(str(e))
+    
+    return "nothing"
+
+@application.route("/reset_camera_url",methods=["POST"])
+def reset_camera_url():
+    data=json.loads(request.get_data())
+    CAMERA_URL=data["url"]
+    return "nothing"
+
 
 # Button requests called from ajax
 @application.route('/request_preview_switch')
