@@ -1,8 +1,25 @@
 import time
 import cv2
 import numpy as np
+import json
+import requests
+import base64
 from PIL import Image
 
+
+
+def requestYoloResult(image):
+    url="http://192.168.23.10:8777/predict/"
+    try:
+        #先将图片进行base64编码
+        retval, buffer = cv2.imencode('.jpg', image)
+        base64image = base64.b64encode(buffer)
+        #print(base64image)
+        result=requests.post(url,data={'img':base64image.decode("utf-8")},
+                  headers={'content-type': 'application/x-www-form-urlencoded'})
+        print(result.text)
+    except Exception as e:
+        print("yolo4检测失败:{}".format(str(e)))
 
 class ObjectDetection:
     def __init__(self):
@@ -64,7 +81,6 @@ class ObjectDetection:
                 cv2.putText(snap, label, (x, y - 5), font, 2, color, 2)
         return snap
 
-
 class VideoStreaming(object):
     def __init__(self,camera_url=0,width=1920,height=1080,fps=60):
         super(VideoStreaming, self).__init__() 
@@ -77,12 +93,12 @@ class VideoStreaming(object):
         self._height=height
         self._fps=fps
         
-        self.VIDEO = cv2.VideoCapture(camera_url)
-        self.VIDEO.set(cv2.CAP_PROP_FRAME_WIDTH, self._width)
-        self.VIDEO.set(cv2.CAP_PROP_FRAME_HEIGHT, self._height)
-        self.VIDEO.set(cv2.CAP_PROP_FPS, self._fps)
-        self._exposure = self.VIDEO.get(cv2.CAP_PROP_EXPOSURE)
-        self._contrast = self.VIDEO.get(cv2.CAP_PROP_CONTRAST)
+        self.CAP = cv2.VideoCapture(camera_url)
+        self.CAP.set(cv2.CAP_PROP_FRAME_WIDTH, self._width)
+        self.CAP.set(cv2.CAP_PROP_FRAME_HEIGHT, self._height)
+        self.CAP.set(cv2.CAP_PROP_FPS, self._fps)
+        self._exposure = self.CAP.get(cv2.CAP_PROP_EXPOSURE)
+        self._contrast = self.CAP.get(cv2.CAP_PROP_CONTRAST)
     
     @property
     def preview(self):
@@ -134,6 +150,8 @@ class VideoStreaming(object):
     def detect(self, value):
         self._detect = bool(value)
 
+
+    """
     @property
     def exposure(self):
         return self._exposure
@@ -141,7 +159,7 @@ class VideoStreaming(object):
     @exposure.setter
     def exposure(self, value):
         self._exposure = value
-        self.VIDEO.set(cv2.CAP_PROP_EXPOSURE, self._exposure)
+        self.CAP.set(cv2.CAP_PROP_EXPOSURE, self._exposure)
 
     @property
     def contrast(self):
@@ -150,9 +168,10 @@ class VideoStreaming(object):
     @contrast.setter
     def contrast(self, value):
         self._contrast = value
-        self.VIDEO.set(cv2.CAP_PROP_CONTRAST, self._contrast)
-
+        self.CAP.set(cv2.CAP_PROP_CONTRAST, self._contrast)
+    """
     
+
     def convertImage(self,image,outSize):
         #图像转换
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -162,20 +181,24 @@ class VideoStreaming(object):
         return image_data
 
     def show(self):
-        while(self.VIDEO.isOpened()):
-            ret, snap = self.VIDEO.read()
+        i=0
+        while(self.CAP.isOpened()):
+            ret, snap = self.CAP.read()
             if self.flipH:
                 snap = cv2.flip(snap, 1)
             if ret == True:
                 if self._preview:
                     # snap = cv2.resize(snap, (0, 0), fx=0.5, fy=0.5)
                     if self.detect:
-                        print("此处检查显示!")
-                        #snap = self.MODEL.detectObj(snap)
+                        #print("此处检查显示!")
+                        #requestYoloResult(snap)
+                        #self.detect=False
+                        cv2.imwrite("/Users/zhengyi/imageset/{}.jpg".format(i),snap)
+                        i+=1
                 else:
                     snap = np.zeros((
-                        int(self.VIDEO.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-                        int(self.VIDEO.get(cv2.CAP_PROP_FRAME_WIDTH))
+                        int(self.CAP.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+                        int(self.CAP.get(cv2.CAP_PROP_FRAME_WIDTH))
                     ), np.uint8)
                     label = 'camera disabled'
                     H, W = snap.shape
@@ -190,3 +213,9 @@ class VideoStreaming(object):
             else:
                 break
         print('off')
+
+
+if __name__=="__main__":
+    image=cv2.imread("static/object.png")
+    requestYoloResult(image)
+

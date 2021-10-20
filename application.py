@@ -9,12 +9,15 @@ from camera_settings import *
 application = Flask(__name__)
 Bootstrap(application)
 VIDEO=None
-CAMERA_URL=0
+CAMERA_URL="http://admin:admin@192.168.214.122:8081"
+WIDTH=1920
+HEIGHT=1080
+FPS=30
 
-def initVideoCapture(camera_url=0,width=1920,height=1080,fps=60):
+def initVideoCapture():
     check_settings()
     global VIDEO
-    VIDEO = VideoStreaming(camera_url=camera_url,width=width,height=height,fps=fps)
+    VIDEO = VideoStreaming(camera_url=CAMERA_URL,width=WIDTH,height=HEIGHT,fps=FPS)
 
 @application.route('/')
 def home():
@@ -27,7 +30,8 @@ def video_feed():
     Video streaming route.
     '''
     print("初始化video!")
-    initVideoCapture(camera_url=0,width=640,height=480,fps=60)
+    if VIDEO is None:
+        initVideoCapture()
     return Response(
         VIDEO.show(),
         mimetype='multipart/x-mixed-replace; boundary=frame'
@@ -35,13 +39,16 @@ def video_feed():
 
 @application.route("/reset_frame_info",methods=["POST"])
 def reset_frame_info():
+    global WIDTH,HEIGHT,FPS
     try:
         data=json.loads(request.get_data())
         width=int(data["width"])
         height=int(data["height"])
         fps=int(data["fps"])
-        #print(width,height,fps)
-        initVideoCapture(CAMERA_URL,width=width,height=height,fps=fps)
+        WIDTH=width
+        HEIGHT=height
+        FPS=fps
+        VIDEO=None
     except Exception as e:
         print(str(e))
     
@@ -49,8 +56,10 @@ def reset_frame_info():
 
 @application.route("/reset_camera_url",methods=["POST"])
 def reset_camera_url():
+    global CAMERA_URL
     data=json.loads(request.get_data())
     CAMERA_URL=data["url"]
+    VIDEO=None
     return "nothing"
 
 
@@ -105,4 +114,4 @@ def reset_camera():
 
 
 if __name__ == '__main__':
-    application.run(debug=True)
+    application.run(host="0.0.0.0", port=8080,debug=True)
