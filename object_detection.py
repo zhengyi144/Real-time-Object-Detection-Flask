@@ -4,20 +4,74 @@ import numpy as np
 import json
 import requests
 import base64
-from PIL import Image
+from PIL import Image,ImageFont,ImageDraw
 
+
+def drawImage(image,out_boxes, out_scores, out_classes):
+    #---------------------------------------------------------#
+    #   图像绘制
+    #---------------------------------------------------------#
+    class_colors={"apple":(0,0,255),"carrot":(0,100,255),"banana":(0,160,160),"orange":(56,235,185),"broccoli":(92,240,131)}
+    out_classes=eval(out_classes)
+    statistics={"apple":0,"carrot":0,"banana":0,"orange":0,"broccoli":0}
+
+    for i, c in list(enumerate(out_classes)):
+        if c not in class_colors.keys():
+            continue
+        statistics[c]+=1
+        predicted_class = out_classes[i]#self.class_names[int(c)]
+        box= out_boxes[i]
+        score=out_scores[i]
+        top, left, bottom, right = box
+        top = max(0, np.floor(top).astype('int32'))
+        left = max(0, np.floor(left).astype('int32'))
+        bottom = min(image.shape[0], np.floor(bottom).astype('int32'))
+        right = min(image.shape[1], np.floor(right).astype('int32'))
+
+        #绘制框框
+        label = '{}'.format(predicted_class)
+        cv2.rectangle(image,(left,top),(right,bottom),class_colors[c],2)
+        cv2.putText(image,label,(left,top),cv2.FONT_HERSHEY_SIMPLEX,1,class_colors[c],2)
+    slabel=""
+    for c in statistics.keys():
+        if statistics[c]>0:
+            slabel+='<{}:{}>'.format(c,statistics[c])
+    cv2.putText(image,slabel,(10,20),cv2.FONT_HERSHEY_SIMPLEX,0.5,(50,0,0),2)
+        
+    return image
 
 
 def requestYoloResult(image):
-    url="http://192.168.23.10:8777/predict/"
     try:
+        #rImage=cv2.resize(image,(416,416))
+        #print(np.shape(image),np.shape(image))
         #先将图片进行base64编码
         retval, buffer = cv2.imencode('.jpg', image)
         base64image = base64.b64encode(buffer)
         #print(base64image)
-        result=requests.post(url,data={'img':base64image.decode("utf-8")},
-                  headers={'content-type': 'application/x-www-form-urlencoded'})
-        print(result.text)
+        r1 = requests.post(url='http://192.168.23.10:8777/predict/',
+                  data=json.dumps({'img':base64image.decode()}),
+                  headers={'content-type': 'application/json'}
+                  )
+        res_data = json.loads(r1.text)
+        #print(res_data)
+        img_b64decode = base64.b64decode(str.encode(res_data['data']))  # base64解码
+        out_boxes = np.frombuffer(img_b64decode, np.float32).reshape(res_data['data_shape'])
+        out_scores = np.frombuffer(base64.b64decode(str.encode(res_data['out_scores'])),np.float32 ) # base64解码
+        out_classes = res_data['out_classes']
+        #print(out_boxes,out_scores,out_classes)
+
+        #对图片进行绘制
+        dImage=drawImage(image,out_boxes, out_scores, out_classes)
+
+        result=cv2.resize(dImage,(image.shape[1],image.shape[0]))
+        #print(np.shape(result))
+        #img_b64decode = base64.b64decode(str.encode(res_data['data']))  # base64解码
+        #parr = np.frombuffer(img_b64decode, np.uint8).reshape(res_data['shape'])
+        # # 从nparr中读取数据，并把数据转换(解码)成图像格式
+        #res_img = Image.fromarray(parr)
+        #snap=cv2.cvtColor(parr,cv2.COLOR_RGB2BGR)
+        return result
     except Exception as e:
         print("yolo4检测失败:{}".format(str(e)))
 
@@ -191,10 +245,11 @@ class VideoStreaming(object):
                     # snap = cv2.resize(snap, (0, 0), fx=0.5, fy=0.5)
                     if self.detect:
                         #print("此处检查显示!")
-                        #requestYoloResult(snap)
+                        snap=requestYoloResult(snap)
+
                         #self.detect=False
-                        cv2.imwrite("/Users/zhengyi/imageset/{}.jpg".format(i),snap)
-                        i+=1
+                        #cv2.imwrite("/Users/zhengyi/imageset/{}.jpg".format(i),snap)
+                        #i+=1
                 else:
                     snap = np.zeros((
                         int(self.CAP.get(cv2.CAP_PROP_FRAME_HEIGHT)),
@@ -216,6 +271,8 @@ class VideoStreaming(object):
 
 
 if __name__=="__main__":
-    image=cv2.imread("static/object.png")
-    requestYoloResult(image)
+    image=cv2.imread("static/banana.jpg")
+    result=requestYoloResult(image)
+    cv2.imshow("test",result)
+    cv2.waitKey(0)
 

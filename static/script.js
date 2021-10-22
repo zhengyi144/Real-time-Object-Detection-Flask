@@ -79,35 +79,32 @@ $(function () {
   });
 });
 
-$(function(){
-   //reset frame info
-   $("a#reset-frame").bind("click",function(){
-    var width=parseInt($("#width").val());
-    var height=parseInt($("#height").val());
-    var fps=parseInt($("#fps").val());
-    $.ajax({
-        type:'POST',
-        url: '/reset_frame_info', 
-        data: JSON.stringify({"width":width ,"height":height,"fps":fps}),
-        //contentType: 'application/json; charset=UTF-8',
-        dataType: 'json',
-        success: function(data){
-           //do nothing
-        }
-    });
-   });
+$("#reset-frame").click(function(){
+  var width=parseInt($("#width").val());
+  var height=parseInt($("#height").val());
+  var fps=parseInt($("#fps").val());
+  $.ajax({
+      type:'POST',
+      url: '/reset_frame_info', 
+      data: JSON.stringify({"width":width ,"height":height,"fps":fps}),
+      //contentType: 'application/json; charset=UTF-8',
+      dataType: 'json',
+      success: function(data){
+         //do nothing
+      }
+  });
 });
 
 
 $(function(){
   //reset camera url
-  $("a#reset-frame").bind("click",function(){
-   var url=parseInt($("#url").val());
+  $("a#reset-url").bind("click",function(){
+   var input_url=parseInt($("#input_url").val());
   
    $.ajax({
        type:'POST',
        url: '/reset_camera_url', 
-       data: JSON.stringify({"url":url}),
+       data: JSON.stringify({"input_url":input_url}),
        //contentType: 'application/json; charset=UTF-8',
        dataType: 'json',
        success: function(data){

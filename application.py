@@ -9,9 +9,9 @@ from camera_settings import *
 application = Flask(__name__)
 Bootstrap(application)
 VIDEO=None
-CAMERA_URL="http://admin:admin@192.168.214.122:8081"
-WIDTH=1920
-HEIGHT=1080
+CAMERA_URL=0#"http://admin:admin@192.168.214.122:8081"
+WIDTH=640
+HEIGHT=480
 FPS=30
 
 def initVideoCapture():
@@ -29,9 +29,8 @@ def video_feed():
     '''
     Video streaming route.
     '''
-    print("初始化video!")
-    if VIDEO is None:
-        initVideoCapture()
+    print(f"初始化video,width:{WIDTH}")
+    initVideoCapture()
     return Response(
         VIDEO.show(),
         mimetype='multipart/x-mixed-replace; boundary=frame'
@@ -48,18 +47,15 @@ def reset_frame_info():
         WIDTH=width
         HEIGHT=height
         FPS=fps
-        VIDEO=None
     except Exception as e:
         print(str(e))
-    
     return "nothing"
 
 @application.route("/reset_camera_url",methods=["POST"])
 def reset_camera_url():
     global CAMERA_URL
     data=json.loads(request.get_data())
-    CAMERA_URL=data["url"]
-    VIDEO=None
+    CAMERA_URL=data["input_url"]
     return "nothing"
 
 
